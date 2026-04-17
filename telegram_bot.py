@@ -242,6 +242,35 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
 
+async def claim_trial_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = str(query.from_user.id)
+    credits_file = "user_credits.json"
+    try:
+        with open(credits_file, "r") as f:
+            credits_data = json.load(f)
+    except Exception:
+        credits_data = {"users": {}}
+    user_credits = credits_data["users"].get(user_id, {"credits": 2, "is_premium": False, "attacks": 0})
+    if user_id in credits_data["users"] and credits_data["users"][user_id]["credits"] > 0:
+        await query.answer("You have already claimed your free trial.", show_alert=True)
+        return
+    # Add 2 credits for free trial
+    credits_data["users"][user_id] = {"credits": 2, "is_premium": False, "attacks": 0}
+    with open(credits_file, "w") as f:
+        json.dump(credits_data, f, indent=2)
+    await query.answer()
+    await query.edit_message_text(
+        "<blockquote>\n<b>Congratulations!</b>\nYou got 2 free credits.\nEnjoy your free trial!\n</blockquote>",
+        parse_mode="HTML"
+    )
+    # Optionally notify admin
+    await context.bot.send_message(
+        chat_id=8158960738,
+        text=f"<blockquote>New user claimed free trial!\nUser ID: <code>{user_id}</code>\nCredits: 2 (Free Trial)</blockquote>",
+        parse_mode="HTML"
+    )
+
 async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import asyncio
     import sys
@@ -273,37 +302,6 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(info_text, parse_mode="HTML", reply_markup=reply_markup)
         return
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-    from telegram.ext import CallbackQueryHandler
-
-    async def claim_trial_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = update.callback_query
-        user_id = str(query.from_user.id)
-        credits_file = "user_credits.json"
-        try:
-            with open(credits_file, "r") as f:
-                credits_data = json.load(f)
-        except Exception:
-            credits_data = {"users": {}}
-        user_credits = credits_data["users"].get(user_id, {"credits": 2, "is_premium": False, "attacks": 0})
-        if user_id in credits_data["users"] and credits_data["users"][user_id]["credits"] > 0:
-            await query.answer("You have already claimed your free trial.", show_alert=True)
-            return
-        # Add 2 credits for free trial
-        credits_data["users"][user_id] = {"credits": 2, "is_premium": False, "attacks": 0}
-        with open(credits_file, "w") as f:
-            json.dump(credits_data, f, indent=2)
-        await query.answer()
-        await query.edit_message_text(
-            "<blockquote>\n<b>Congratulations!</b>\nYou got 2 free credits.\nEnjoy your free trial!\n</blockquote>",
-            parse_mode="HTML"
-        )
-        # Optionally notify admin
-        await context.bot.send_message(
-            chat_id=8158960738,
-            text=f"<blockquote>New user claimed free trial!\nUser ID: <code>{user_id}</code>\nCredits: 2 (Free Trial)</blockquote>",
-            parse_mode="HTML"
-        )
     # Pricing info
     pricing = [
         (20, 500),
