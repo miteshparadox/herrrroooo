@@ -1,0 +1,14 @@
+{
+  "users": {
+    "6882771195": {
+      "credits": 0,
+      "is_premium": false,
+      "attacks": 2
+    },
+    "7596443202": {
+      "credits": 5,
+      "is_premium": false,
+      "attacks": 5
+    }
+  }
+}
