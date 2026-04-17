@@ -301,12 +301,18 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text=f"<blockquote>User tried to attack with 0 credits!\nUser: <b>{first_name}</b> (@{username})\nUser ID: <code>{user_id}</code>\n</blockquote>",
                 parse_mode="HTML"
             )
+    # Only allow attack if user has credits or is admin
+    if not is_admin and user_credits["credits"] <= 0:
+        await update.message.reply_text(
+            "<blockquote>\n<b>Insufficient credits!</b>\n\nYou need to buy credits to use /attack.\nUse /buy to see premium packages.\n</blockquote>",
+            parse_mode="HTML"
+        )
+        return
     # Show confirmation/info before attack
     if not context.args:
         await update.message.reply_text("Please provide a URL: /attack <url>")  
         return
     url = context.args[0]
-    # No reply_text here if it is empty, or add a proper message
     await update.message.reply_text(f"<blockquote>Attack started on: <b>{url}</b></blockquote>", parse_mode="HTML")
     if not is_admin:
         await context.bot.send_message(
@@ -314,9 +320,6 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"<blockquote>Attack requested!\nUser: <b>{first_name}</b> (@{username})\nUser ID: <code>{user_id}</code>\nURL: <code>{url}</code>\nCredits before: <b>{user_credits['credits']}</b></blockquote>",
             parse_mode="HTML"
         )
-    # Deduct credit and update
-        user_credits["credits"] -= 1
-    if not is_admin:
         user_credits["credits"] -= 1
         user_credits["attacks"] += 1
         credits_data["users"][user_id] = user_credits
