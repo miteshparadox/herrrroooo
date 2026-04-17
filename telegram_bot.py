@@ -260,24 +260,50 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_credits = credits_data["users"].get(user_id, {"credits": 2, "is_premium": False, "attacks": 0})
     # Free trial info for new user (first /attack ever): only show info, do NOT proceed with attack
     if not is_admin and user_id not in credits_data["users"]:
-        credits_data["users"][user_id] = user_credits
-        with open(credits_file, "w") as f:
-            json.dump(credits_data, f, indent=2)
-        await update.message.reply_text(
+        # Show info box with Free Trial button
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        info_text = (
             "<blockquote>\n<b>YOU ARE NOT SUBSCRIBED YET</b>\n\n"
             "<b>Note:</b> Only for education purpose. Safest DDOS with proxy & socks provided. Undetectable.\n\n"
             "<b>Free Trial:</b>\n? 2 free credits (2 attacks max)\n\n"
             "<b>Premium:</b>\nUse /buy to see all premium credit packages.\n\n"
-            "</blockquote>",
+            "</blockquote>"
+        )
+        keyboard = [[InlineKeyboardButton("Claim Free Trial", callback_data=f"claim_trial_{user_id}")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(info_text, parse_mode="HTML", reply_markup=reply_markup)
+        return
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+    from telegram.ext import CallbackQueryHandler
+
+    async def claim_trial_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        user_id = str(query.from_user.id)
+        credits_file = "user_credits.json"
+        try:
+            with open(credits_file, "r") as f:
+                credits_data = json.load(f)
+        except Exception:
+            credits_data = {"users": {}}
+        user_credits = credits_data["users"].get(user_id, {"credits": 2, "is_premium": False, "attacks": 0})
+        if user_id in credits_data["users"] and credits_data["users"][user_id]["credits"] > 0:
+            await query.answer("You have already claimed your free trial.", show_alert=True)
+            return
+        # Add 2 credits for free trial
+        credits_data["users"][user_id] = {"credits": 2, "is_premium": False, "attacks": 0}
+        with open(credits_file, "w") as f:
+            json.dump(credits_data, f, indent=2)
+        await query.answer()
+        await query.edit_message_text(
+            "<blockquote>\n<b>Congratulations!</b>\nYou got 2 free credits.\nEnjoy your free trial!\n</blockquote>",
             parse_mode="HTML"
         )
-        if not is_admin:
-                await context.bot.send_message(
-                    chat_id=8158960738,
-                    text=f"<blockquote>New user registered!\nUser: <b>{first_name}</b> (@{username})\nUser ID: <code>{user_id}</code>\nCredits: 2 (Free Trial)</blockquote>",
-                    parse_mode="HTML"
-                )
-        return
+        # Optionally notify admin
+        await context.bot.send_message(
+            chat_id=8158960738,
+            text=f"<blockquote>New user claimed free trial!\nUser ID: <code>{user_id}</code>\nCredits: 2 (Free Trial)</blockquote>",
+            parse_mode="HTML"
+        )
     # Pricing info
     pricing = [
         (20, 500),
@@ -370,30 +396,6 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         hulk_process = None
         await update.message.reply_text(f"Error: {e}")
 
-async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    is_admin = user_id in ADMIN_IDS
-    username = update.effective_user.username or "N/A"
-    username = update.effective_user.username or "N/A"
-    first_name = update.effective_user.first_name or "N/A"
-    credits_file = "user_credits.json"
-    try:
-        with open(credits_file, "r") as f:
-            credits_data = json.load(f)
-    except Exception:
-        credits_data = {"users": {}}
-    user_credits = credits_data["users"].get(user_id, {"credits": 2, "is_premium": False, "attacks": 0})
-    if is_admin:
-        await update.message.reply_text(
-            f"<blockquote>User: <b>{first_name}</b> (@{username})\nUser ID: <code>{user_id}</code>\nCredits: <b>Unlimited</b>\nPremium: <b>Unlimited</b>\nAttacks: <b>Unlimited</b></blockquote>",
-            parse_mode="HTML"
-        )
-    else:
-        await update.message.reply_text(
-            f"<blockquote>User: <b>{first_name}</b> (@{username})\nUser ID: <code>{user_id}</code>\nCredits: <b>{user_credits['credits']}</b>\nPremium: <b>{'Yes' if user_credits.get('is_premium', False) else 'No'}</b>\nAttacks: <b>{user_credits.get('attacks', 0)}</b></blockquote>",
-                parse_mode="HTML"
-            )
-        # Removed admin notification for /credit command
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import asyncio
@@ -427,6 +429,7 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("addcredit", addcredit))
     app.add_handler(CommandHandler("setpromo", setpromo))
     app.add_handler(CommandHandler("ads", ads))
+    app.add_handler(CallbackQueryHandler(claim_trial_callback, pattern=r"^claim_trial_.*"))
     print("Bot running...")
     app.run_polling()
 
