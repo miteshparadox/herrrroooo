@@ -107,7 +107,7 @@ try:
 except ImportError:
     pass
 
-BOT_TOKEN = "8611206012:AAFZgKhx2ZdvoFCyjrQ03frXW4JG8J7sh44"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = 8158960738
 
 # Store the hulk.py process globally
