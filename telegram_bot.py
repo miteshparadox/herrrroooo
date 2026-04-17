@@ -348,8 +348,8 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Error: {e}")
 
 async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    is_admin = user_id in ADMIN_IDS
+    user_id = str(update.effective_user.id)
+    is_admin = int(user_id) == ADMIN_ID
     username = update.effective_user.username or "N/A"
     username = update.effective_user.username or "N/A"
     first_name = update.effective_user.first_name or "N/A"
