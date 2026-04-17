@@ -1,4 +1,4 @@
-﻿import subprocess
+import subprocess
 import json
 import os
 from datetime import datetime
@@ -335,10 +335,10 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     system = platform.system().lower()
     if 'linux' in system or 'darwin' in system:
-        python_cmd = 'python2'
+        python_cmd = 'python3'
         from shutil import which
-        if which('python2') is None:
-            await update.message.reply_text("python2 not found. Please install with: sudo apt install python2")
+        if which('python3') is None:
+            await update.message.reply_text("python3 not found. Please install with: sudo apt install python3")
             return
     else:
         python_cmd = sys.executable
