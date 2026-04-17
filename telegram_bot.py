@@ -1,4 +1,24 @@
-﻿async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+﻿import subprocess
+import json
+import os
+from datetime import datetime
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+# Load environment variables from .env if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = 8158960738
+
+# Store the hulk.py process globally
+hulk_process = None
+
+async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     is_admin = int(user_id) == ADMIN_ID
     username = update.effective_user.username or "N/A"
@@ -348,8 +368,8 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Error: {e}")
 
 async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    is_admin = int(user_id) == ADMIN_ID
+    user_id = update.effective_user.id
+    is_admin = user_id in ADMIN_IDS
     username = update.effective_user.username or "N/A"
     username = update.effective_user.username or "N/A"
     first_name = update.effective_user.first_name or "N/A"
