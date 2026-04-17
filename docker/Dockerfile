@@ -1,12 +1,19 @@
-FROM golang:1-alpine
-LABEL maintainer="Alexander I.Grafov <grafov@gmail.com>"
+# Use the official lightweight Python image
+FROM python:3.11-slim
 
-RUN apk add --no-cache git \
-  && go get -d -v github.com/grafov/hulk \
-  && go install github.com/grafov/hulk@latest \
-  && rm -rf ~/go/src/github.com/grafov/hulk \
-  && apk del git
+# Set the working directory
+WORKDIR /app
 
-ENTRYPOINT ["hulk"]
+# Copy requirements and install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["--help"]
+# Copy the rest of the code
+COPY . .
+
+# Set environment variables (optional, Railway will override with dashboard values)
+# ENV BOT_TOKEN=your-telegram-bot-token-here
+# ENV ADMIN_ID=8158960738
+
+# Start the bot
+CMD ["python", "telegram_bot.py"]
